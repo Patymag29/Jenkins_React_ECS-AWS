@@ -48,20 +48,38 @@ pipeline {
             agent {
                 docker {
                     //image 'amazon/aws-cli'
-                    image 'docker:dind'  // Docker-in-Docker com Alpine
+                    image 'docker:latest'
                     reuseNode true
-                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=""'
+                   // args '-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=""'
+                    args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
                 }
             }
             steps {
-                withCredentials([usernamePassword(credentialsId: 'myNewUser', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')]) {
-                    sh """
-                        apk add --no-cache aws-cli  # instala AWS CLI no Alpine
-                        docker build -t $AWS_DOCKER_REGISTRY/$APP_NAME .
-                        aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_DOCKER_REGISTRY
-                        docker push $AWS_DOCKER_REGISTRY/$APP_NAME:latest
-                    """
-                }
+                // withCredentials([usernamePassword(credentialsId: 'myNewUser', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
+                // {
+                //     sh """
+                //         apk add --no-cache aws-cli  # instala AWS CLI no Alpine
+                //         docker build -t $AWS_DOCKER_REGISTRY/$APP_NAME .
+                //         aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_DOCKER_REGISTRY
+                //         docker push $AWS_DOCKER_REGISTRY/$APP_NAME:latest
+                //     """
+                // }
+                
+                withCredentials([usernamePassword(credentialsId: 'myNewUser', passwordVariable: 'AWS_SECRET_ACCESS_KEY', usernameVariable: 'AWS_ACCESS_KEY_ID')])
+                 {
+                            sh """
+                                # Install AWS CLI
+                                apk add --no-cache python3 py3-pip
+                                pip3 install awscli
+                                
+                                # Build Docker image
+                                docker build -t $AWS_DOCKER_REGISTRY/$APP_NAME:latest .
+                                
+                                # Login to ECR and push
+                                aws ecr get-login-password | docker login --username AWS --password-stdin $AWS_DOCKER_REGISTRY
+                                docker push $AWS_DOCKER_REGISTRY/$APP_NAME:latest
+                            """
+                        }
             }
         }
         

@@ -47,7 +47,8 @@ pipeline {
         stage('Build My Docker Image') {
             agent {
                 docker {
-                    image 'amazon/aws-cli'
+                    //image 'amazon/aws-cli'
+                    image 'docker:dind'  // Docker-in-Docker com Alpine
                     reuseNode true
                     args '-u root -v /var/run/docker.sock:/var/run/docker.sock --entrypoint=""'
                 }
